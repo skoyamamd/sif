@@ -1,0 +1,76 @@
+Bootstrap: docker
+From: ubuntu:16.04
+Stage: spython-base
+
+%post
+		
+NEUSOMATIC_VERSION=0.2.1
+ZLIB_VERSION=1.2.11
+NUMPY_VERSION=1.15.4
+SCIPY_VERSION=1.2.0
+IMAGEIO_VERSION=2.5.0
+PYTORCH_VERSION=1.1.0
+TORCHVISION_VERSION=0.3.0
+CUDATOOLKIT_VERSION=9.0
+CMAKE_VERSION=3.13.2
+PYBEDTOOLS_VERSION=0.8.0
+PYSAM_VERSION=0.15.2
+SAMTOOLS_VERSION=1.9
+TABIX_VERSION=0.2.6
+BEDTOOLS_VERSION=2.27.1
+BIOPYTHON_VERSION=1.72
+GCC_VERSION=5
+
+apt-get update && apt-get install -y --fix-missing \
+build-essential zlib1g-dev curl less vim bzip2
+apt-get install -y --fix-missing git wget
+
+curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
+rm Miniconda3-latest-Linux-x86_64.sh
+PATH=/miniconda/bin:${PATH}
+LD_LIBRARY_PATH=/miniconda/lib:${LD_LIBRARY_PATH}
+conda update -y conda
+
+
+conda install -y zlib=${ZLIB_VERSION} numpy=${NUMPY_VERSION} scipy=${SCIPY_VERSION} \
+imageio=${IMAGEIO_VERSION} && conda clean -a
+conda install -y cmake=${CMAKE_VERSION} -c conda-forge && conda clean -a
+conda install -y pysam=${PYSAM_VERSION} pybedtools=${PYBEDTOOLS_VERSION} \
+samtools=${SAMTOOLS_VERSION} tabix=${TABIX_VERSION} \
+bedtools=${BEDTOOLS_VERSION} \
+biopython=${BIOPYTHON_VERSION} -c bioconda && conda clean -a
+conda install -y pytorch=${PYTORCH_VERSION} \
+torchvision=${TORCHVISION_VERSION} \
+cudatoolkit=${CUDATOOLKIT_VERSION} -c pytorch && conda clean -a
+
+apt-get install -y --fix-missing gcc-${GCC_VERSION} g++-${GCC_VERSION}
+
+curl https://github.com/bioinform/neusomatic/archive/v${NEUSOMATIC_VERSION}.tar.gz -o /opt/v${NEUSOMATIC_VERSION}.tar.gz/v${NEUSOMATIC_VERSION}.tar.gz
+cd /opt/ && tar -xzvf v${NEUSOMATIC_VERSION}.tar.gz && mv neusomatic-${NEUSOMATIC_VERSION} neusomatic && rm /opt/v${NEUSOMATIC_VERSION}.tar.gz
+cd /opt/neusomatic/ && ./build.sh
+PATH=/opt/neusomatic/neusomatic/bin:/opt/neusomatic/neusomatic/python/:${PATH}
+%environment
+export NEUSOMATIC_VERSION=0.2.1
+export ZLIB_VERSION=1.2.11
+export NUMPY_VERSION=1.15.4
+export SCIPY_VERSION=1.2.0
+export IMAGEIO_VERSION=2.5.0
+export PYTORCH_VERSION=1.1.0
+export TORCHVISION_VERSION=0.3.0
+export CUDATOOLKIT_VERSION=9.0
+export CMAKE_VERSION=3.13.2
+export PYBEDTOOLS_VERSION=0.8.0
+export PYSAM_VERSION=0.15.2
+export SAMTOOLS_VERSION=1.9
+export TABIX_VERSION=0.2.6
+export BEDTOOLS_VERSION=2.27.1
+export BIOPYTHON_VERSION=1.72
+export GCC_VERSION=5
+export PATH=/miniconda/bin:${PATH}
+export LD_LIBRARY_PATH=/miniconda/lib:${LD_LIBRARY_PATH}
+export PATH=/opt/neusomatic/neusomatic/bin:/opt/neusomatic/neusomatic/python/:${PATH}
+%runscript
+exec /bin/bash "$@"
+%startscript
+exec /bin/bash "$@"
